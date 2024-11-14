@@ -31,7 +31,7 @@ def process_images(
         raise ValueError(f"Source folder does not exist: {source_folder}")
 
     # Check if destination exists and is not empty
-    if dest_path.exists() and any(dest_path.iterdir()):
+    if dest_path.exists() and any(dest_path.glob("**/*")):
         print(f"Error: Destination directory '{dest_path}' already exists and is not empty.")
         print("Please provide an empty directory to avoid overwriting existing files.")
         return
@@ -62,20 +62,23 @@ def process_images(
     )
     print(f"Found {len(dict_duplicates)} groups of duplicates")
 
-    all_duplicated_files = []
-    for k, v in dict_duplicates.items():
-        print(f"{k}: {len(v)} duplicates")
-        for duplicated_file in v:
-            print(f"  {duplicated_file}")
-        all_duplicated_files.extend(v)
-
-    # Move duplicate files to destination folder
     moved_count = 0
-    for duplicated_file in all_duplicated_files:
-        shutil.move(str(duplicated_file), str(dest_path / duplicated_file.name))
-        moved_count += 1
+    for group_id, (ref_image, group_duplicates) in enumerate(dict_duplicates.items()):
+        print(f"[{group_id}]: {ref_image.name}: {len(group_duplicates)} duplicates")
+        dest_folder = dest_path / f"group_{group_id}"
+        dest_folder.mkdir(parents=True, exist_ok=True)
+        # Copy reference image to destination folder
+        shutil.copy(str(ref_image), str(dest_folder / f"reference_{ref_image.name}"))
+        for duplicated_file in group_duplicates:
+            print(f"  {duplicated_file.name}")
+            shutil.move(str(duplicated_file), str(dest_folder / duplicated_file.name))
+            moved_count += 1
 
     print(f"Moved {moved_count} duplicate files to {dest_folder}")
 
 if __name__ == "__main__":
-    fire.Fire(process_images)
+    # fire.Fire(process_images)
+    process_images(
+        source_folder="/home/rafael/data/deleteme",
+        dest_folder="/home/rafael/data/deleteme/duplicated",
+    )
