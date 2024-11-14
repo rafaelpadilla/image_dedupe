@@ -26,13 +26,16 @@ def process_images(
     source_path = Path(source_folder)
     dest_path = Path(dest_folder)
 
+    print(f"\n\n🔍 Source folder: {source_path}")
+
     # Validate source folder exists
     if not source_path.exists():
-        raise ValueError(f"Source folder does not exist: {source_folder}")
+        raise ValueError(f"🚨 Source folder does not exist: {source_folder}")
 
     # Check if destination exists and is not empty
-    if dest_path.exists() and any(dest_path.glob("**/*")):
-        print(f"Error: Destination directory '{dest_path}' already exists and is not empty.")
+    total_files = len(list(dest_path.glob("**/*")))
+    if dest_path.exists() and total_files > 0:
+        print(f"🚨 Error: Destination directory '{dest_path}' already exists and is not empty.")
         print("Please provide an empty directory to avoid overwriting existing files.")
         return
 
@@ -51,7 +54,7 @@ def process_images(
         f for f in source_path.glob("**/*")
         if f.is_file() and f.suffix.lower() in ACCEPTED_IMAGE_EXTENSIONS
     ]
-    print(f"Found {len(image_files)} image files in source folder")
+    print(f"❗ Found {len(image_files)} image files in source folder")
 
     # Find duplicates
     dict_duplicates = hasher.find_duplicates(
@@ -77,8 +80,4 @@ def process_images(
     print(f"💾 Moved {moved_count} duplicate files to {dest_folder}")
 
 if __name__ == "__main__":
-    # fire.Fire(process_images)
-    process_images(
-        source_folder="/home/rafael/data/deleteme",
-        dest_folder="/home/rafael/data/deleteme/duplicated",
-    )
+    fire.Fire(process_images)
