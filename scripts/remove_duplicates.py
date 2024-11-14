@@ -60,11 +60,11 @@ def process_images(
         similarity_threshold=similarity_threshold,
         return_dictionary=True,
     )
-    print(f"Found {len(dict_duplicates)} groups of duplicates")
+    print(f"❗ Found {len(dict_duplicates)} groups of duplicates")
 
     moved_count = 0
     for group_id, (ref_image, group_duplicates) in enumerate(dict_duplicates.items()):
-        print(f"[{group_id}]: {ref_image.name}: {len(group_duplicates)} duplicates")
+        print(f"👯 [{group_id}]: {ref_image.name}: {len(group_duplicates)} duplicates")
         dest_folder = dest_path / f"group_{group_id}"
         dest_folder.mkdir(parents=True, exist_ok=True)
         # Copy reference image to destination folder
@@ -74,7 +74,7 @@ def process_images(
             shutil.move(str(duplicated_file), str(dest_folder / duplicated_file.name))
             moved_count += 1
 
-    print(f"Moved {moved_count} duplicate files to {dest_folder}")
+    print(f"💾 Moved {moved_count} duplicate files to {dest_folder}")
 
 if __name__ == "__main__":
     # fire.Fire(process_images)
