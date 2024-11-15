@@ -39,7 +39,6 @@ def process_images(
         print("Please provide an empty directory to avoid overwriting existing files.")
         return
 
-    dest_path.mkdir(parents=True, exist_ok=True)
 
     # Validate hash_type
     hash_type = hash_type.lower()
@@ -64,6 +63,10 @@ def process_images(
         return_dictionary=True,
     )
     print(f"❗ Found {len(dict_duplicates)} groups of duplicates")
+    if len(dict_duplicates) == 0:
+        return
+
+    dest_path.mkdir(parents=True, exist_ok=True)
 
     moved_count = 0
     for group_id, (ref_image, group_duplicates) in enumerate(dict_duplicates.items()):
