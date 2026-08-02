@@ -1,7 +1,7 @@
 """CLI to find and move duplicate images."""
 
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import fire
 
@@ -39,17 +39,13 @@ def process_images(
             f"🚨 Error: Destination directory '{dest_path}' already exists "
             "and is not empty."
         )
-        print(
-            "Please provide an empty directory to avoid overwriting "
-            "existing files."
-        )
+        print("Please provide an empty directory to avoid overwriting existing files.")
         return
 
     hash_type = hash_type.lower()
     if not HashType.exists(hash_type):
         raise ValueError(
-            "Invalid hash_type. Must be one of: "
-            f"{list(HashType.get_values().keys())}"
+            f"Invalid hash_type. Must be one of: {list(HashType.get_values().keys())}"
         )
 
     hasher = HashingSimilarity(hash_type, use_multiprocessing=use_multiprocessing)
@@ -75,13 +71,8 @@ def process_images(
 
     moved_count = 0
     last_group_folder = dest_path
-    for group_id, (ref_image, group_duplicates) in enumerate(
-        dict_duplicates.items()
-    ):
-        print(
-            f"👯 [{group_id}]: {ref_image.name}: "
-            f"{len(group_duplicates)} duplicates"
-        )
+    for group_id, (ref_image, group_duplicates) in enumerate(dict_duplicates.items()):
+        print(f"👯 [{group_id}]: {ref_image.name}: {len(group_duplicates)} duplicates")
         group_folder = dest_path / f"group_{group_id}"
         group_folder.mkdir(parents=True, exist_ok=True)
         last_group_folder = group_folder
@@ -91,9 +82,7 @@ def process_images(
                 str(group_folder / f"reference_{ref_image.name}"),
             )
         for duplicated_file in group_duplicates:
-            destination_path = (
-                group_folder / f"duplicated_{duplicated_file.name}"
-            )
+            destination_path = group_folder / f"duplicated_{duplicated_file.name}"
             if not destination_path.exists() and duplicated_file.exists():
                 print(f"  {duplicated_file.name}")
                 shutil.move(str(duplicated_file), destination_path)
