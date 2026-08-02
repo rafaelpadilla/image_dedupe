@@ -1,0 +1,31 @@
+[project]
+name = "image-dedupe"
+version = "0.2.0"
+description = "A tool for finding and managing duplicate images"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Rafael Padilla", email = "eng.rafaelpadilla@gmail.com" },
+]
+dependencies = [
+    "numpy>=1.19.2",
+    "Pillow>=8.0.0",
+    "imagehash>=4.2.1",
+    "scipy>=1.5.2",
+    "tqdm>=4.65.0",
+    "annoy>=1.17.1",
+    "fire>=0.5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/rafaelpadilla/image_dedupe"
+
+[project.scripts]
+remove_duplicates = "image_dedupe.remove_duplicates:main"
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

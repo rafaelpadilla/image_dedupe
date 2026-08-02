@@ -85,9 +85,17 @@ results = similarity_checker.get_min_max_distances(all_images, distance_metric="
 
 This script helps you identify and move duplicate images from a source folder to a destination folder using image hashing techniques.
 
+#### Setup
+Install the package (editable) so the `remove_duplicates` command is on your PATH:
+
+```bash
+uv sync
+# or: pip install -e .
+```
+
 #### Usage
 ```bash
-python remove_duplicates.py --source_folder="path/to/images" --dest_folder="path/to/duplicates" [OPTIONS]
+remove_duplicates --source_folder="path/to/images" --dest_folder="path/to/duplicates" [OPTIONS]
 ```
 
 #### Arguments
@@ -99,7 +107,7 @@ python remove_duplicates.py --source_folder="path/to/images" --dest_folder="path
 
 #### Example
 ```bash
-python remove_duplicates.py --source_folder="dataset/images" --dest_folder="dataset/duplicates" --similarity_threshold=0.15 --hash_type="average"
+remove_duplicates --source_folder="dataset/images" --dest_folder="dataset/duplicates" --similarity_threshold=0.15 --hash_type="average"
 ```
 
 This will scan all images in the source folder, identify duplicates using the specified hashing method, and move them to the destination folder while preserving the original filenames.
