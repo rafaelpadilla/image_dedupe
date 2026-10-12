@@ -15,6 +15,7 @@ def process_images(
     similarity_threshold: float = 0.1,
     hash_type: str = "perceptual",
     use_multiprocessing: bool = True,
+    hash_size: int = 8,
 ) -> None:
     """Process images to find and move duplicates to a destination folder.
 
@@ -24,6 +25,8 @@ def process_images(
         similarity_threshold: Threshold for image similarity (0-1).
         hash_type: Hashing type ('perceptual', 'average', 'difference').
         use_multiprocessing: Whether to use multiprocessing.
+        hash_size: Side length of the hash; the hash has hash_size x hash_size
+            bits (default 8, i.e. 64 bits).
     """
     source_path = Path(source_folder)
     dest_path = Path(dest_folder)
@@ -48,7 +51,9 @@ def process_images(
             f"Invalid hash_type. Must be one of: {list(HashType.get_values().keys())}"
         )
 
-    hasher = HashingSimilarity(hash_type, use_multiprocessing=use_multiprocessing)
+    hasher = HashingSimilarity(
+        hash_type, use_multiprocessing=use_multiprocessing, hash_size=hash_size
+    )
 
     image_files = [
         f
