@@ -1,4 +1,5 @@
 from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 from multiprocessing import Manager
 from pathlib import Path
 from typing import List, Optional, Union, Tuple, Dict, Callable
@@ -20,10 +21,10 @@ class HashType(ExplicitEnum):
     WHASH_HAAR = "whash_haar"
     WHASH_DB4 = "whash_db4"
 
-def _func_whash_db4(img):
-    return imagehash.whash(img, mode="db4")
-def _func_whash_haar(img):
-    return imagehash.whash(img, mode="haar")
+def _func_whash_db4(img, hash_size=8):
+    return imagehash.whash(img, hash_size=hash_size, mode="db4")
+def _func_whash_haar(img, hash_size=8):
+    return imagehash.whash(img, hash_size=hash_size, mode="haar")
 
 # Dictionary mapping hash types to their corresponding functions
 HASH_FUNCTIONS: Dict[HashType, Callable] = {
@@ -36,6 +37,10 @@ HASH_FUNCTIONS: Dict[HashType, Callable] = {
     HashType.WHASH_DB4: _func_whash_db4
 }
 
+# Default side length of the hash; the hash has hash_size x hash_size bits.
+DEFAULT_HASH_SIZE = 8
+
+# Number of bits produced with DEFAULT_HASH_SIZE.
 HASH_SIZES = {
     HashType.AVERAGE: 64,
     HashType.PERCEPTUAL: 64,
@@ -46,23 +51,57 @@ HASH_SIZES = {
     HashType.WHASH_DB4: 196,
 }
 
+
+def get_hash_function(
+    hash_type: Union[str, ExplicitEnum], hash_size: int = DEFAULT_HASH_SIZE
+) -> Callable:
+    """Return the hash function for `hash_type` with the given `hash_size`.
+
+    Args:
+        hash_type (Union[str, ExplicitEnum]): The hashing type to use.
+        hash_size (int): Side length of the hash. The hash has
+            `hash_size * hash_size` bits (default 8, i.e. 64 bits). Larger
+            values capture finer detail, so fewer images count as duplicates.
+            Not supported for `COLOR`, whose size is set by its bin count.
+
+    Returns:
+        Callable: Function that maps a PIL image to an `imagehash.ImageHash`.
+    """
+    if hash_size < 2:
+        raise ValueError(f"hash_size must be >= 2, got {hash_size}")
+    if hash_type == HashType.COLOR:
+        if hash_size != DEFAULT_HASH_SIZE:
+            raise ValueError("hash_size is not supported for the color hash")
+        return HASH_FUNCTIONS[hash_type]
+    return partial(HASH_FUNCTIONS[hash_type], hash_size=hash_size)
+
 class HashingSimilarity():
     """Class to compute image similarity using hashing techniques."""
 
     def __init__(
-        self, hash_type: Union[str, ExplicitEnum], use_multiprocessing: bool = True
+        self,
+        hash_type: Union[str, ExplicitEnum],
+        use_multiprocessing: bool = True,
+        hash_size: int = DEFAULT_HASH_SIZE,
     ):
         """Initialize the HashingSimilarity class with the specified hashing type.
         Args:
             hash_type (Union[str, ExplicitEnum]): The hashing type to use.
             use_multiprocessing (bool): Enable/Disable multiprocessing.
+            hash_size (int): Side length of the hash. The hash has
+                `hash_size * hash_size` bits; the default 8 gives 64 bits.
+                Use e.g. 16 (256 bits) to only treat nearly identical images
+                as duplicates.
         """
         if not HashType.exists(hash_type):
             raise ValueError(
                 f"Invalid hash type {hash_type}. Available options are: {list(HashType.get_values().keys())}"
             )
         self.hash_type = hash_type
-        self.hash_func = HASH_FUNCTIONS[hash_type]
+        self.hash_size = hash_size
+        self.hash_func = get_hash_function(hash_type, hash_size)
+        # Number of bits in each hash (e.g. 64 for hash_size=8).
+        self.hash_bits = self.hash_func(Image.new("RGB", (256, 256))).hash.size
         self._img2hash: dict = {}
         self.num_workers = NUM_PROC if use_multiprocessing else 1
 
@@ -179,7 +218,7 @@ class HashingSimilarity():
         all_sizes = [i.hash.size for i in lst_hashes]
         ref_size = all_sizes[0]
         assert all(size == ref_size for size in all_sizes), "All hashes must be of the same size"
-        assert all_sizes[0] == HASH_SIZES[self.hash_type], "Hash size must be the same as the one used to build the Annoy index"
+        assert all_sizes[0] == self.hash_bits, f"Hashes have {all_sizes[0]} bits, expected {self.hash_bits} (hash_size={self.hash_size})"
 
         # Get length of the hash vector
         annoy_index = self.compute_annoy_index(
@@ -279,7 +318,7 @@ class HashingSimilarity():
         all_sizes = [i.hash.size for i in lst_hashes]
         ref_size = all_sizes[0]
         assert all(size == ref_size for size in all_sizes), "All hashes must be of the same size"
-        assert all_sizes[0] == HASH_SIZES[self.hash_type], "Hash size must be the same as the one used to build the Annoy index"
+        assert all_sizes[0] == self.hash_bits, f"Hashes have {all_sizes[0]} bits, expected {self.hash_bits} (hash_size={self.hash_size})"
 
         # Get length of the hash vector
         annoy_index = self.compute_annoy_index(
@@ -367,7 +406,7 @@ class HashingSimilarity():
         img2 = load_image(image2)
 
         # Get hash function and compute hashes
-        hash_function = HASH_FUNCTIONS[hash_type]
+        hash_function = get_hash_function(hash_type, self.hash_size)
         hash1 = hash_function(img1)
         hash2 = hash_function(img2)
 

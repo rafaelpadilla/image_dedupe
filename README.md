@@ -27,6 +27,17 @@ from HashingSimilarity import HashingSimilarity, HashType
 similarity_checker = HashingSimilarity(HashType.AVERAGE)
 ```
 
+### Hash size
+By default every hash has 64 bits (`hash_size=8`, an 8×8 hash). Pass `hash_size` to change it: the hash has `hash_size × hash_size` bits. A larger hash captures finer detail, so only images that are nearly identical are reported as duplicates. This is useful for frames from a fixed camera, which a 64-bit hash often cannot tell apart.
+
+```python
+# 256-bit perceptual hash (16x16)
+similarity_checker = HashingSimilarity(HashType.PERCEPTUAL, hash_size=16)
+print(similarity_checker.hash_bits)  # 256
+```
+
+`hash_size` is not supported for `HashType.COLOR`, whose size is set by its color bins.
+
 ### Verify Similarity
 To check if two images are similar, use the `is_similar` method. This method returns a boolean indicating whether the images are similar based on the specified threshold `[0, 1]`. If you do not specify the threshold, the default value is `threshold=0`, which means both images must be identical or almost identical.
 
@@ -104,6 +115,7 @@ remove_duplicates --source_folder="path/to/images" --dest_folder="path/to/duplic
 - `similarity_threshold`: Threshold for image similarity (0-1), default is 0.1
 - `hash_type`: Type of hashing to use ('perceptual', 'average', 'difference'), default is 'perceptual'
 - `use_multiprocessing`: Whether to use multiprocessing for faster processing, default is True
+- `hash_size`: Side length of the hash; the hash has `hash_size × hash_size` bits. Default is 8 (64 bits)
 
 #### Example
 ```bash
